@@ -4,7 +4,7 @@ import { readToken } from "@/lib/storage";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const token = await readToken();
+  const token = readToken();
   if (!token) return NextResponse.json({ connected: false });
   return NextResponse.json({
     connected: true,

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const token = await readToken();
+  const token = readToken();
   if (!token) {
     return NextResponse.json({ error: "no_token" }, { status: 400 });
   }

@@ -1,6 +1,3 @@
-import { promises as fs } from "fs";
-import path from "path";
-
 export type StoredToken = {
   access_token: string;
   expires_at: number;
@@ -9,25 +6,22 @@ export type StoredToken = {
   picture?: string;
 };
 
-const TOKEN_PATH = path.join(process.cwd(), ".token.json");
-
-export async function readToken(): Promise<StoredToken | null> {
-  try {
-    const raw = await fs.readFile(TOKEN_PATH, "utf8");
-    return JSON.parse(raw) as StoredToken;
-  } catch {
-    return null;
-  }
-}
-
-export async function writeToken(token: StoredToken): Promise<void> {
-  await fs.writeFile(TOKEN_PATH, JSON.stringify(token, null, 2), { mode: 0o600 });
-}
-
-export async function clearToken(): Promise<void> {
-  try {
-    await fs.unlink(TOKEN_PATH);
-  } catch {
-    /* noop */
-  }
+/**
+ * Read token data from environment variables. In Heroku these are set via
+ * `heroku config:set` after the OAuth flow. In local dev they live in `.env.local`.
+ */
+export function readToken(): StoredToken | null {
+  const token = process.env.LINKEDIN_TOKEN;
+  const sub = process.env.LINKEDIN_SUB;
+  const expiresAt = process.env.LINKEDIN_TOKEN_EXPIRES_AT;
+  if (!token || !sub || !expiresAt) return null;
+  const n = Number(expiresAt);
+  if (!Number.isFinite(n)) return null;
+  return {
+    access_token: token,
+    sub,
+    expires_at: n,
+    name: process.env.LINKEDIN_NAME || undefined,
+    picture: process.env.LINKEDIN_PICTURE || undefined,
+  };
 }
