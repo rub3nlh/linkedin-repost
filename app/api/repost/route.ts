@@ -15,10 +15,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "missing_url" }, { status: 400 });
   }
 
-  const parentUrn = extractUrn(url);
-  if (!parentUrn) {
+  if (!extractUrn(url)) {
     return NextResponse.json(
-      { error: "No se pudo extraer el URN del post desde la URL. Pega un enlace tipo linkedin.com/posts/... o linkedin.com/feed/update/urn:li:..." },
+      { error: "No parece una URL de post de LinkedIn. Pega un enlace tipo linkedin.com/posts/... o linkedin.com/feed/update/urn:li:..." },
       { status: 400 },
     );
   }
@@ -35,10 +34,10 @@ export async function POST(req: Request) {
     const result = await createReshare({
       accessToken: token.access_token,
       authorSub: token.sub,
-      parentUrn,
+      originalUrl: url.trim(),
       commentary: typeof message === "string" ? message : "",
     });
-    return NextResponse.json({ ok: true, id: result.id, parentUrn });
+    return NextResponse.json({ ok: true, id: result.id });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "repost_failed" }, { status: 500 });
   }

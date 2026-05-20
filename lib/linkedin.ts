@@ -1,8 +1,7 @@
 export const LINKEDIN_AUTH_URL = "https://www.linkedin.com/oauth/v2/authorization";
 export const LINKEDIN_TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken";
 export const LINKEDIN_USERINFO_URL = "https://api.linkedin.com/v2/userinfo";
-export const LINKEDIN_POSTS_URL = "https://api.linkedin.com/rest/posts";
-export const LINKEDIN_API_VERSION = process.env.LINKEDIN_API_VERSION || "202604";
+export const LINKEDIN_UGC_POSTS_URL = "https://api.linkedin.com/v2/ugcPosts";
 
 export const SCOPES = ["openid", "profile", "email", "w_member_social"];
 
@@ -96,28 +95,33 @@ export async function fetchUserInfo(accessToken: string): Promise<{
 export async function createReshare(params: {
   accessToken: string;
   authorSub: string;
-  parentUrn: string;
+  originalUrl: string;
   commentary: string;
 }): Promise<{ id: string }> {
   const body = {
     author: `urn:li:person:${params.authorSub}`,
-    commentary: params.commentary || "",
-    visibility: "PUBLIC",
-    distribution: {
-      feedDistribution: "MAIN_FEED",
-      targetEntities: [],
-      thirdPartyDistributionChannels: [],
-    },
     lifecycleState: "PUBLISHED",
-    isReshareDisabledByAuthor: false,
-    reshareContext: { parent: params.parentUrn },
+    specificContent: {
+      "com.linkedin.ugc.ShareContent": {
+        shareCommentary: { text: params.commentary || "" },
+        shareMediaCategory: "ARTICLE",
+        media: [
+          {
+            status: "READY",
+            originalUrl: params.originalUrl,
+          },
+        ],
+      },
+    },
+    visibility: {
+      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+    },
   };
 
-  const res = await fetch(LINKEDIN_POSTS_URL, {
+  const res = await fetch(LINKEDIN_UGC_POSTS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${params.accessToken}`,
-      "LinkedIn-Version": LINKEDIN_API_VERSION,
       "X-Restli-Protocol-Version": "2.0.0",
       "Content-Type": "application/json",
     },
